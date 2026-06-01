@@ -29,7 +29,15 @@ export function useCarControl() {
     try {
       fetch(`${API_URL}/velocidad`).then(res => res.json()).then(data => { if (data.success) setSpeed(data.velocidad); }).catch(() => {});
       fetch(`${API_URL}/movimientos`).then(res => res.json()).then(data => { if (data.success) setMovimientos(data.data); }).catch(() => {});
-      fetch(`${API_URL}/demos`).then(res => res.json()).then(data => { if (data.success) setDemos(data.data); }).catch(() => {});
+      fetch(`${API_URL}/demos`).then(res => res.json()).then(data => { 
+        if (data.success) {
+          const filteredDemos = data.data.filter(d => {
+            const name = d.nombre_secuencia.toLowerCase();
+            return !name.includes('demo final') && !name.includes('testing');
+          });
+          setDemos(filteredDemos); 
+        }
+      }).catch(() => {});
       setStatus('conectado');
       setStatusMsg('Conectado al servidor');
     } catch (e) {
