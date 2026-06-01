@@ -140,25 +140,29 @@ export default function Vehicle({ movementStatus, controlsRef }) {
         
         // Movimientos de Eje Propio / Skid Steering (Giros 90 y 360)
         else if (cmd.includes('giro')) {
-          const giroForce = 1500; // Fuerza brutal para que el giro sea rapidísimo
-          const giroSteer = 1.0;  // Volante torcido al máximo posible
+          // Usamos la API correcta de Cannon.js para forzar rotación sobre su propio eje (Tank Turn).
+          // Esto evita que se mueva como un coche normal, manteniéndolo en su lugar y girando rápido a velocidad fija.
+          const angularSpeed = 6.0; // Velocidad de giro radical en radianes/s
           
           if (cmd.includes('derecha')) {
-            engineForceLeft = -giroForce; 
-            engineForceRight = -giroForce;
-            steeringValue = -giroSteer;
+            chassisApi.angularVelocity.set(0, -angularSpeed, 0);
           } else if (cmd.includes('izquierda')) {
-            engineForceLeft = -giroForce;
-            engineForceRight = -giroForce;
-            steeringValue = giroSteer;
+            chassisApi.angularVelocity.set(0, angularSpeed, 0);
           }
         }
       } else {
         // Stop / Frenado (si se acabó el tiempo o es comando 'detener')
         braking = 30;
+        // Frenar rotación en seco si estaba girando
+        if (commandState.current.cmd.includes('giro')) {
+          chassisApi.angularVelocity.set(0, 0, 0);
+        }
       }
     } else {
       braking = 30;
+      if (commandState.current.cmd.includes('giro')) {
+        chassisApi.angularVelocity.set(0, 0, 0);
+      }
     }
 
     // Aplicar fuerzas independientemente por lado (0: Front-Left, 1: Front-Right, 2: Back-Left, 3: Back-Right)
