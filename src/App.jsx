@@ -16,6 +16,7 @@ function App() {
     movimientos,
     demos,
     logs,
+    networkLogs,
     status,
     statusMsg,
     wsConnected,
@@ -67,6 +68,7 @@ function App() {
         ) : (
           <MonitorPanel 
             logs={logs} 
+            networkLogs={networkLogs}
             obstacleWarning={obstacleWarning} 
             statusMsg={statusMsg} 
             wsConnected={wsConnected} 

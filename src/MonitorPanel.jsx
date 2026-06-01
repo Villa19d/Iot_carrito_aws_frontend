@@ -87,21 +87,40 @@ export default function MonitorPanel({ logs, obstacleWarning, statusMsg, wsConne
         </div>
 
         {/* Big Terminal Logs */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
-          <h2 className="section-title"><Terminal size={20} className="gradient-text" /> Logs en Tiempo Real</h2>
-          <div className="terminal-log" style={{ flex: 1, height: 'auto', minHeight: '400px' }}>
-            {logs.length === 0 ? (
-              <div style={{ opacity: 0.5 }}>Esperando telemetría...</div>
-            ) : (
-              logs.map((log) => (
-                <div key={log.id} className="terminal-entry" style={{ marginBottom: '12px', fontSize: '1rem' }}>
-                  <span className="terminal-time" style={{ display: 'block', fontSize: '0.8rem' }}>[{log.date}]</span>
-                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>{log.name}</span>
-                  <span style={{ color: 'var(--text-muted)', marginLeft: '12px' }}>PWM: {log.pwm}</span>
-                </div>
-              ))
-            )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <h2 className="section-title"><Terminal size={20} className="gradient-text" /> Telemetría de Motores</h2>
+            <div className="terminal-log" style={{ flex: 1, minHeight: '200px' }}>
+              {logs.length === 0 ? (
+                <div style={{ opacity: 0.5 }}>Esperando telemetría...</div>
+              ) : (
+                logs.map((log) => (
+                  <div key={log.id} className="terminal-entry" style={{ marginBottom: '12px', fontSize: '0.9rem' }}>
+                    <span className="terminal-time" style={{ display: 'block', fontSize: '0.75rem' }}>[{log.date}]</span>
+                    <span style={{ color: '#10b981', fontWeight: 'bold' }}>{log.name}</span>
+                    <span style={{ color: 'var(--text-muted)', marginLeft: '12px' }}>PWM: {log.pwm}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
+
+          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <h2 className="section-title"><Wifi size={20} className="gradient-text" /> Tráfico de Red (Polling)</h2>
+            <div className="terminal-log" style={{ flex: 1, minHeight: '200px', fontSize: '0.8rem', color: '#cbd5e1' }}>
+              {(!networkLogs || networkLogs.length === 0) ? (
+                <div style={{ opacity: 0.5 }}>Escuchando red...</div>
+              ) : (
+                networkLogs.map((nlog, i) => (
+                  <div key={i} style={{ marginBottom: '4px', fontFamily: 'var(--font-mono)' }}>
+                    {nlog}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
         </div>
 
       </div>
