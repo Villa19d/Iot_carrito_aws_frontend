@@ -87,35 +87,87 @@ export default function Vehicle({ movementStatus, controlsRef }) {
     indexUpAxis: 1,
   }), useRef(null));
 
+  const commandState = useRef({ cmd: '', startTime: 0 });
+
   useFrame(() => {
-    let engineForce = 0;
+    let engineForceLeft = 0;
+    let engineForceRight = 0;
     let steeringValue = 0;
+    let braking = 0;
 
     if (movementStatus) {
       const cmd = movementStatus.toLowerCase();
-      if (cmd.includes('adelante')) engineForce = -600; 
-      if (cmd.includes('atrás') || cmd.includes('atras')) engineForce = 600;
       
-      if (cmd.includes('derecha')) steeringValue = -0.4;
-      if (cmd.includes('izquierda')) steeringValue = 0.4;
-
-      if (cmd === 'detener') {
-        vehicleApi.setBrake(20, 0);
-        vehicleApi.setBrake(20, 1);
-        vehicleApi.setBrake(20, 2);
-        vehicleApi.setBrake(20, 3);
-      } else {
-        vehicleApi.setBrake(0, 0);
-        vehicleApi.setBrake(0, 1);
-        vehicleApi.setBrake(0, 2);
-        vehicleApi.setBrake(0, 3);
+      // Update command tracking for pulses
+      if (commandState.current.cmd !== cmd) {
+        commandState.current.cmd = cmd;
+        commandState.current.startTime = Date.now();
       }
+
+      const elapsed = Date.now() - commandState.current.startTime;
+
+      // Determine duration based on command type to simulate ESP8266 timers
+      let durationMs = Infinity; 
+      if (cmd.includes('vuelta')) durationMs = 800; // 0.8 seconds pulse
+      if (cmd.includes('giro 90')) durationMs = 500; // 0.5 sec rotation
+      if (cmd.includes('giro 360')) durationMs = 2000; // 2.0 sec rotation
+
+      if (elapsed < durationMs && cmd !== 'detener') {
+        const baseForce = 600;
+
+        // Movimientos Continuos
+        if (cmd === 'adelante') { 
+          engineForceLeft = -baseForce; engineForceRight = -baseForce; 
+        }
+        else if (cmd === 'atrás' || cmd === 'atras') { 
+          engineForceLeft = baseForce; engineForceRight = baseForce; 
+        }
+        
+        // Movimientos por Pulso (Vueltas)
+        else if (cmd === 'vuelta adelante derecha') { 
+          engineForceLeft = -baseForce; engineForceRight = -baseForce; steeringValue = -0.4; 
+        }
+        else if (cmd === 'vuelta adelante izquierda') { 
+          engineForceLeft = -baseForce; engineForceRight = -baseForce; steeringValue = 0.4; 
+        }
+        else if (cmd === 'vuelta atrás derecha' || cmd === 'vuelta atras derecha') { 
+          engineForceLeft = baseForce; engineForceRight = baseForce; steeringValue = -0.4; 
+        }
+        else if (cmd === 'vuelta atrás izquierda' || cmd === 'vuelta atras izquierda') { 
+          engineForceLeft = baseForce; engineForceRight = baseForce; steeringValue = 0.4; 
+        }
+        
+        // Movimientos de Eje Propio / Skid Steering (Giros 90 y 360)
+        else if (cmd.includes('giro')) {
+          const rotForce = 800; // Fuerza extra para vencer la fricción lateral
+          if (cmd.includes('derecha')) {
+            engineForceLeft = -rotForce;  // Izquierdas hacia adelante
+            engineForceRight = rotForce;  // Derechas hacia atrás
+          } else if (cmd.includes('izquierda')) {
+            engineForceLeft = rotForce;   // Izquierdas hacia atrás
+            engineForceRight = -rotForce; // Derechas hacia adelante
+          }
+        }
+      } else {
+        // Stop / Frenado (si se acabó el tiempo o es comando 'detener')
+        braking = 30;
+      }
+    } else {
+      braking = 30;
     }
 
-    vehicleApi.applyEngineForce(engineForce, 2);
-    vehicleApi.applyEngineForce(engineForce, 3);
+    // Aplicar fuerzas independientemente por lado (0: Front-Left, 1: Front-Right, 2: Back-Left, 3: Back-Right)
+    vehicleApi.applyEngineForce(engineForceLeft, 0);
+    vehicleApi.applyEngineForce(engineForceRight, 1);
+    vehicleApi.applyEngineForce(engineForceLeft, 2);
+    vehicleApi.applyEngineForce(engineForceRight, 3);
+
     vehicleApi.setSteeringValue(steeringValue, 0);
     vehicleApi.setSteeringValue(steeringValue, 1);
+
+    for (let i = 0; i < 4; i++) {
+      vehicleApi.setBrake(braking, i);
+    }
 
     if (chassisRef.current) {
       const carPos = new THREE.Vector3();
