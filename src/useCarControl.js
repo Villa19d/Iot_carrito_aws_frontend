@@ -54,6 +54,12 @@ export function useCarControl() {
             const name = d.nombre_secuencia.toLowerCase();
             return !name.includes('demo final') && !name.includes('testing');
           });
+          
+          // Renombrar dinámicamente en el frontend (Demo 1, Demo 2, etc.)
+          filteredDemos.forEach((d, index) => {
+            d.nombre_secuencia = `Demo ${index + 1}`;
+          });
+          
           setDemos(filteredDemos); 
         }
       }).catch(() => {});
