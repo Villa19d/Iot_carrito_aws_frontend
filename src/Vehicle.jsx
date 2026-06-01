@@ -106,7 +106,7 @@ export default function Vehicle({ movementStatus, controlsRef }) {
 
       const elapsed = Date.now() - commandState.current.startTime;
 
-      // Usar la duración enviada por el servidor, o valores por defecto para pre-visualizar
+      // Usar la duración enviada por el servidor
       let durationMs = Infinity; 
       if (movementStatus.duration) {
         durationMs = movementStatus.duration;
@@ -114,6 +114,12 @@ export default function Vehicle({ movementStatus, controlsRef }) {
         if (cmd.includes('vuelta')) durationMs = 800; // 0.8 seconds pulse
         if (cmd.includes('90')) durationMs = 500; // 0.5 sec rotation
         if (cmd.includes('36')) durationMs = 2000; // 2.0 sec rotation
+      }
+
+      // EXCEPCIÓN: El ESP8266 físico ignora el tiempo en Adelante y Atrás (los hace infinitos)
+      // Simulamos este comportamiento físico exactamente igual:
+      if (cmd === 'adelante' || cmd === 'atrás' || cmd === 'atras') {
+        durationMs = Infinity;
       }
 
       if (elapsed < durationMs && cmd !== 'detener') {
