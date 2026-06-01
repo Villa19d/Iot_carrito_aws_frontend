@@ -2,7 +2,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import Scene3D from './Scene3D';
 import { Terminal, AlertTriangle, Activity, Wifi } from 'lucide-react';
 
-export default function MonitorPanel({ logs, obstacleWarning, statusMsg, wsConnected }) {
+export default function MonitorPanel({ logs, networkLogs, obstacleWarning, statusMsg, wsConnected }) {
   const lastMovementName = logs.length > 0 ? logs[0].name : null;
   const [ping, setPing] = useState(0);
 
