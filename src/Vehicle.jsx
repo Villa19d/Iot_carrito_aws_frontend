@@ -109,11 +109,12 @@ export default function Vehicle({ movementStatus, controlsRef }) {
       // Determine duration based on command type to simulate ESP8266 timers
       let durationMs = Infinity; 
       if (cmd.includes('vuelta')) durationMs = 800; // 0.8 seconds pulse
-      if (cmd.includes('giro 90')) durationMs = 500; // 0.5 sec rotation
-      if (cmd.includes('giro 360')) durationMs = 2000; // 2.0 sec rotation
+      if (cmd.includes('90')) durationMs = 500; // 0.5 sec rotation
+      if (cmd.includes('36')) durationMs = 2000; // 2.0 sec rotation
 
       if (elapsed < durationMs && cmd !== 'detener') {
         const baseForce = 600;
+        const maxSteer = 0.8; // Curvas mucho más pronunciadas
 
         // Movimientos Continuos
         if (cmd === 'adelante') { 
@@ -125,35 +126,45 @@ export default function Vehicle({ movementStatus, controlsRef }) {
         
         // Movimientos por Pulso (Vueltas)
         else if (cmd === 'vuelta adelante derecha') { 
-          engineForceLeft = -baseForce; engineForceRight = -baseForce; steeringValue = -0.4; 
+          engineForceLeft = -baseForce; engineForceRight = -baseForce; steeringValue = -maxSteer; 
         }
         else if (cmd === 'vuelta adelante izquierda') { 
-          engineForceLeft = -baseForce; engineForceRight = -baseForce; steeringValue = 0.4; 
+          engineForceLeft = -baseForce; engineForceRight = -baseForce; steeringValue = maxSteer; 
         }
         else if (cmd === 'vuelta atrás derecha' || cmd === 'vuelta atras derecha') { 
-          engineForceLeft = baseForce; engineForceRight = baseForce; steeringValue = -0.4; 
+          engineForceLeft = baseForce; engineForceRight = baseForce; steeringValue = -maxSteer; 
         }
         else if (cmd === 'vuelta atrás izquierda' || cmd === 'vuelta atras izquierda') { 
-          engineForceLeft = baseForce; engineForceRight = baseForce; steeringValue = 0.4; 
+          engineForceLeft = baseForce; engineForceRight = baseForce; steeringValue = maxSteer; 
         }
         
         // Movimientos de Eje Propio / Skid Steering (Giros 90 y 360)
         else if (cmd.includes('giro')) {
-          const rotForce = 800; // Fuerza extra para vencer la fricción lateral
+          // El RaycastVehicle de Cannon no permite "tank turns" fácilmente debido a la fricción lateral de las llantas.
+          // Por lo tanto, forzamos la rotación aplicando velocidad angular directamente al chasis.
+          const angularSpeed = 4.0; 
+          
           if (cmd.includes('derecha')) {
-            engineForceLeft = -rotForce;  // Izquierdas hacia adelante
-            engineForceRight = rotForce;  // Derechas hacia atrás
+            chassisApi.setAngularVelocity([0, -angularSpeed, 0]);
+            engineForceLeft = -200; engineForceRight = 200; // Para efecto visual en llantas
           } else if (cmd.includes('izquierda')) {
-            engineForceLeft = rotForce;   // Izquierdas hacia atrás
-            engineForceRight = -rotForce; // Derechas hacia adelante
+            chassisApi.setAngularVelocity([0, angularSpeed, 0]);
+            engineForceLeft = 200; engineForceRight = -200; // Para efecto visual en llantas
           }
         }
       } else {
         // Stop / Frenado (si se acabó el tiempo o es comando 'detener')
         braking = 30;
+        // Si venía de un giro, frenamos la rotación en seco para dar sensación robótica
+        if (commandState.current.cmd.includes('giro')) {
+          chassisApi.setAngularVelocity([0, 0, 0]);
+        }
       }
     } else {
       braking = 30;
+      if (commandState.current.cmd.includes('giro')) {
+        chassisApi.setAngularVelocity([0, 0, 0]);
+      }
     }
 
     // Aplicar fuerzas independientemente por lado (0: Front-Left, 1: Front-Right, 2: Back-Left, 3: Back-Right)
