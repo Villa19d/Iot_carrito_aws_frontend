@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useBox, useRaycastVehicle, useCylinder } from '@react-three/cannon';
+import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 
 const Wheel = React.forwardRef(({ radius, leftSide }, ref) => {
@@ -15,23 +16,19 @@ const Wheel = React.forwardRef(({ radius, leftSide }, ref) => {
 
   return (
     <group ref={ref}>
-      {/* Neumático grueso */}
-      <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+      <mesh rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[radius, radius, 0.25, 32]} />
         <meshStandardMaterial color="#111" roughness={0.9} />
       </mesh>
-      {/* Rin exterior plateado */}
-      <mesh rotation={[0, 0, Math.PI / 2]} position={[leftSide ? 0.13 : -0.13, 0, 0]} castShadow>
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[leftSide ? 0.13 : -0.13, 0, 0]}>
         <cylinderGeometry args={[radius * 0.7, radius * 0.7, 0.06, 16]} />
         <meshPhysicalMaterial color="#cbd5e1" metalness={1.0} roughness={0.2} clearcoat={1.0} />
       </mesh>
-      {/* Rin interior hueco (efecto de profundidad) */}
-      <mesh rotation={[0, 0, Math.PI / 2]} position={[leftSide ? 0.14 : -0.14, 0, 0]} castShadow>
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[leftSide ? 0.14 : -0.14, 0, 0]}>
         <cylinderGeometry args={[radius * 0.5, radius * 0.5, 0.06, 16]} />
         <meshStandardMaterial color="#0f0f0f" roughness={0.8} />
       </mesh>
-      {/* Tapa del rin central deportiva */}
-      <mesh rotation={[0, 0, Math.PI / 2]} position={[leftSide ? 0.15 : -0.15, 0, 0]} castShadow>
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[leftSide ? 0.15 : -0.15, 0, 0]}>
         <cylinderGeometry args={[radius * 0.15, radius * 0.15, 0.05, 16]} />
         <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.2} />
       </mesh>
@@ -134,29 +131,37 @@ export default function Vehicle({ movementStatus, controlsRef }) {
   return (
     <group ref={vehicle}>
       <group ref={chassisBody}>
-        {/* Carrocería principal */}
-        <mesh position={[0, -0.1, 0]}>
-          <boxGeometry args={[chassisWidth, chassisHeight, chassisLength]} />
-          <meshStandardMaterial color="#ff0a33" metalness={0.6} roughness={0.2} />
-        </mesh>
+        {/* Carrocería principal (Clearcoat Glossy Paint) */}
+        <RoundedBox args={[chassisWidth, chassisHeight, chassisLength]} radius={0.15} smoothness={4} position={[0, -0.1, 0]}>
+          <meshPhysicalMaterial 
+            color="#ff0a33" 
+            metalness={0.6} 
+            roughness={0.1} 
+            clearcoat={1.0} 
+            clearcoatRoughness={0.05} 
+          />
+        </RoundedBox>
         
-        {/* Cabina */}
-        <mesh position={[0, 0.3, -0.2]}>
-          <boxGeometry args={[1.0, 0.45, 1.4]} />
-          <meshStandardMaterial color="#000000" metalness={0.8} roughness={0.1} transparent opacity={0.8} />
-        </mesh>
+        {/* Cabina (Vidrios simples transparentes) */}
+        <RoundedBox args={[1.0, 0.45, 1.4]} radius={0.1} smoothness={4} position={[0, 0.3, -0.2]}>
+          <meshStandardMaterial 
+            color="#000000" 
+            metalness={0.8} 
+            roughness={0.1} 
+            transparent={true}
+            opacity={0.8}
+          />
+        </RoundedBox>
 
-        {/* Faldones laterales */}
-        <mesh position={[0, -0.3, 0]}>
-          <boxGeometry args={[1.35, 0.1, 1.6]} />
+        {/* Faldones laterales aerodinámicos */}
+        <RoundedBox args={[1.35, 0.1, 1.6]} radius={0.02} smoothness={2} position={[0, -0.3, 0]}>
           <meshStandardMaterial color="#111" roughness={0.8} />
-        </mesh>
+        </RoundedBox>
 
-        {/* Alerón Trasero */}
-        <mesh position={[0, 0.4, -1.3]}>
-          <boxGeometry args={[1.2, 0.05, 0.3]} />
+        {/* Alerón Trasero Deportivo */}
+        <RoundedBox args={[1.2, 0.05, 0.3]} radius={0.02} position={[0, 0.4, -1.3]}>
           <meshPhysicalMaterial color="#111" metalness={0.5} roughness={0.2} clearcoat={1.0} />
-        </mesh>
+        </RoundedBox>
         {/* Soportes del alerón */}
         <mesh position={[-0.4, 0.25, -1.3]}>
           <boxGeometry args={[0.05, 0.3, 0.1]} />
@@ -168,36 +173,30 @@ export default function Vehicle({ movementStatus, controlsRef }) {
         </mesh>
 
         {/* Espejos Retrovisores */}
-        <mesh position={[0.65, 0.2, 0.3]}>
-          <boxGeometry args={[0.15, 0.1, 0.1]} />
+        <RoundedBox args={[0.15, 0.1, 0.1]} radius={0.02} position={[0.65, 0.2, 0.3]}>
           <meshPhysicalMaterial color="#ff0a33" metalness={0.6} roughness={0.1} clearcoat={1.0} />
-        </mesh>
-        <mesh position={[-0.65, 0.2, 0.3]}>
-          <boxGeometry args={[0.15, 0.1, 0.1]} />
+        </RoundedBox>
+        <RoundedBox args={[0.15, 0.1, 0.1]} radius={0.02} position={[-0.65, 0.2, 0.3]}>
           <meshPhysicalMaterial color="#ff0a33" metalness={0.6} roughness={0.1} clearcoat={1.0} />
-        </mesh>
+        </RoundedBox>
 
-        {/* Faros Delanteros */}
-        <mesh position={[0.4, 0.0, 1.3]}>
-          <boxGeometry args={[0.3, 0.08, 0.05]} />
+        {/* Faros Delanteros con Brillo y Luz Dinámica */}
+        <RoundedBox args={[0.3, 0.08, 0.05]} radius={0.02} position={[0.4, 0.0, 1.3]}>
           <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={2} />
-        </mesh>
-        <mesh position={[-0.4, 0.0, 1.3]}>
-          <boxGeometry args={[0.3, 0.08, 0.05]} />
+        </RoundedBox>
+        <RoundedBox args={[0.3, 0.08, 0.05]} radius={0.02} position={[-0.4, 0.0, 1.3]}>
           <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={2} />
-        </mesh>
+        </RoundedBox>
         <pointLight position={[0.4, 0, 1.5]} color="#ffffff" intensity={2} distance={5} />
         <pointLight position={[-0.4, 0, 1.5]} color="#ffffff" intensity={2} distance={5} />
 
         {/* Faros Traseros Neon */}
-        <mesh position={[0.3, 0.0, -1.3]}>
-          <boxGeometry args={[0.4, 0.08, 0.05]} />
+        <RoundedBox args={[0.4, 0.08, 0.05]} radius={0.02} position={[0.3, 0.0, -1.3]}>
           <meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={3} />
-        </mesh>
-        <mesh position={[-0.3, 0.0, -1.3]}>
-          <boxGeometry args={[0.4, 0.08, 0.05]} />
+        </RoundedBox>
+        <RoundedBox args={[0.4, 0.08, 0.05]} radius={0.02} position={[-0.3, 0.0, -1.3]}>
           <meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={3} />
-        </mesh>
+        </RoundedBox>
 
         {/* Parrilla Frontal Mesh */}
         <mesh position={[0, -0.15, 1.301]}>
@@ -215,7 +214,7 @@ export default function Vehicle({ movementStatus, controlsRef }) {
           <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} />
         </mesh>
 
-        {/* Sombra Falsa */}
+        {/* Sombra Falsa (Cero costo gráfico) */}
         <mesh position={[0, -0.48, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[chassisWidth * 1.5, chassisLength * 1.2]} />
           <meshBasicMaterial color="#000" transparent opacity={0.6} />

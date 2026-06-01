@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Grid, OrbitControls } from '@react-three/drei';
+import { Environment, Grid, OrbitControls } from '@react-three/drei';
 import { Physics, usePlane } from '@react-three/cannon';
 import Vehicle from './Vehicle';
 
@@ -44,10 +44,10 @@ export default function Scene3D({ lastMovement }) {
     >
       <OrbitControls ref={controlsRef} makeDefault maxPolarAngle={Math.PI / 2 - 0.05} minDistance={3} maxDistance={20} />
       
-      {/* Iluminación básica 100% segura para la GPU */}
-      <ambientLight intensity={0.8} />
+      {/* Entorno premium sin calcular sombras */}
+      <Environment preset="city" />
+      <ambientLight intensity={0.5} />
       <directionalLight position={[10, 20, 10]} intensity={1.5} color="#ffffff" />
-      <directionalLight position={[-10, 10, -10]} intensity={0.5} color="#0ea5e9" />
       
       <Physics broadphase="sap" gravity={[0, -9.81, 0]}>
         <Vehicle movementStatus={lastMovement} controlsRef={controlsRef} />
