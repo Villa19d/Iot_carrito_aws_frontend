@@ -140,31 +140,25 @@ export default function Vehicle({ movementStatus, controlsRef }) {
         
         // Movimientos de Eje Propio / Skid Steering (Giros 90 y 360)
         else if (cmd.includes('giro')) {
-          // El RaycastVehicle de Cannon no permite "tank turns" fácilmente debido a la fricción lateral de las llantas.
-          // Por lo tanto, forzamos la rotación aplicando velocidad angular directamente al chasis.
-          const angularSpeed = 4.0; 
+          const giroForce = 1500; // Fuerza brutal para que el giro sea rapidísimo
+          const giroSteer = 1.0;  // Volante torcido al máximo posible
           
           if (cmd.includes('derecha')) {
-            chassisApi.setAngularVelocity([0, -angularSpeed, 0]);
-            engineForceLeft = -200; engineForceRight = 200; // Para efecto visual en llantas
+            engineForceLeft = -giroForce; 
+            engineForceRight = -giroForce;
+            steeringValue = -giroSteer;
           } else if (cmd.includes('izquierda')) {
-            chassisApi.setAngularVelocity([0, angularSpeed, 0]);
-            engineForceLeft = 200; engineForceRight = -200; // Para efecto visual en llantas
+            engineForceLeft = -giroForce;
+            engineForceRight = -giroForce;
+            steeringValue = giroSteer;
           }
         }
       } else {
         // Stop / Frenado (si se acabó el tiempo o es comando 'detener')
         braking = 30;
-        // Si venía de un giro, frenamos la rotación en seco para dar sensación robótica
-        if (commandState.current.cmd.includes('giro')) {
-          chassisApi.setAngularVelocity([0, 0, 0]);
-        }
       }
     } else {
       braking = 30;
-      if (commandState.current.cmd.includes('giro')) {
-        chassisApi.setAngularVelocity([0, 0, 0]);
-      }
     }
 
     // Aplicar fuerzas independientemente por lado (0: Front-Left, 1: Front-Right, 2: Back-Left, 3: Back-Right)
