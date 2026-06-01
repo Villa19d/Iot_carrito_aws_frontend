@@ -42,13 +42,14 @@ export function useCarControl() {
     loadData();
   }, [loadData]);
 
-  const pushLog = useCallback((name, pwm, timestamp = null) => {
+  const pushLog = useCallback((name, pwm, timestamp = null, duration = null) => {
     setLogs(prev => {
       const newLog = {
         id: `${timestamp || Date.now()}-${name}`,
         name: name,
         date: timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString(),
-        pwm: pwm || 255
+        pwm: pwm || 255,
+        duration: duration || null
       };
       if (prev.length > 0 && prev[0].id === newLog.id) return prev;
       return [newLog, ...prev].slice(0, 5); // Keep last 5 elements
@@ -60,7 +61,7 @@ export function useCarControl() {
       const res = await fetchWithTimeout(`${API_URL}/ultimo_movimiento`, {}, 3000);
       const data = await res.json();
       if (data.success && data.data) {
-        pushLog(data.data.nombre_movimiento, data.data.mia_pwm, data.data.fecha_hora);
+        pushLog(data.data.nombre_movimiento, data.data.mia_pwm, data.data.fecha_hora, data.data.mi_time);
       }
     } catch (e) {
       // Silent fail for polling
@@ -93,7 +94,7 @@ export function useCarControl() {
             const parsed = JSON.parse(event.data);
             // El servidor envía: { success: True, data: { movimiento, mia_pwm, mda_pwm, mi_time } }
             if (parsed.success && parsed.data && parsed.data.movimiento) {
-              pushLog(parsed.data.movimiento, parsed.data.mia_pwm);
+              pushLog(parsed.data.movimiento, parsed.data.mia_pwm, null, parsed.data.mi_time);
             }
           } catch (e) {}
         };

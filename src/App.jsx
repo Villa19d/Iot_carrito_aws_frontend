@@ -25,7 +25,7 @@ function App() {
     changeSpeed
   } = useCarControl();
 
-  const lastMovementName = logs.length > 0 ? logs[0].name : null;
+  const lastMovement = logs.length > 0 ? logs[0] : null;
 
   return (
     <>
@@ -58,7 +58,7 @@ function App() {
 
               <div className="canvas-container" style={{ flex: 1, minHeight: '400px' }}>
                 <Suspense fallback={<div className="flex-center w-full h-full text-muted">Cargando 3D...</div>}>
-                  <Scene3D lastMovement={lastMovementName} />
+                  <Scene3D lastMovement={lastMovement} />
                 </Suspense>
                 <div className="overlay-text">Modelo en tiempo real</div>
               </div>

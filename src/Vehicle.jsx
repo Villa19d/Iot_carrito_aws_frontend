@@ -95,22 +95,26 @@ export default function Vehicle({ movementStatus, controlsRef }) {
     let steeringValue = 0;
     let braking = 0;
 
-    if (movementStatus) {
-      const cmd = movementStatus.toLowerCase();
+    if (movementStatus && movementStatus.name) {
+      const cmd = movementStatus.name.toLowerCase();
       
       // Update command tracking for pulses
-      if (commandState.current.cmd !== cmd) {
-        commandState.current.cmd = cmd;
+      if (commandState.current.cmd !== movementStatus.id) {
+        commandState.current.cmd = movementStatus.id;
         commandState.current.startTime = Date.now();
       }
 
       const elapsed = Date.now() - commandState.current.startTime;
 
-      // Determine duration based on command type to simulate ESP8266 timers
+      // Usar la duración enviada por el servidor, o valores por defecto para pre-visualizar
       let durationMs = Infinity; 
-      if (cmd.includes('vuelta')) durationMs = 800; // 0.8 seconds pulse
-      if (cmd.includes('90')) durationMs = 500; // 0.5 sec rotation
-      if (cmd.includes('36')) durationMs = 2000; // 2.0 sec rotation
+      if (movementStatus.duration) {
+        durationMs = movementStatus.duration;
+      } else {
+        if (cmd.includes('vuelta')) durationMs = 800; // 0.8 seconds pulse
+        if (cmd.includes('90')) durationMs = 500; // 0.5 sec rotation
+        if (cmd.includes('36')) durationMs = 2000; // 2.0 sec rotation
+      }
 
       if (elapsed < durationMs && cmd !== 'detener') {
         const baseForce = 600;
@@ -154,13 +158,13 @@ export default function Vehicle({ movementStatus, controlsRef }) {
         // Stop / Frenado (si se acabó el tiempo o es comando 'detener')
         braking = 30;
         // Frenar rotación en seco si estaba girando
-        if (commandState.current.cmd.includes('giro')) {
+        if (commandState.current.cmd.toLowerCase().includes('giro')) {
           chassisApi.angularVelocity.set(0, 0, 0);
         }
       }
     } else {
       braking = 30;
-      if (commandState.current.cmd.includes('giro')) {
+      if (commandState.current.cmd.toLowerCase().includes('giro')) {
         chassisApi.angularVelocity.set(0, 0, 0);
       }
     }
