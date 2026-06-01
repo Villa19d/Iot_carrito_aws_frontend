@@ -14,9 +14,10 @@ function Ground() {
 
   return (
     <group ref={ref}>
-      <mesh position={[0, 0, 0]} visible={false}>
+      {/* Suelo sólido súper oscuro para tapar el vacío bajo las rendijas */}
+      <mesh position={[0, 0, 0]}>
         <planeGeometry args={[1000, 1000]} />
-        <meshBasicMaterial />
+        <meshStandardMaterial color="#050314" roughness={1.0} />
       </mesh>
     </group>
   );
