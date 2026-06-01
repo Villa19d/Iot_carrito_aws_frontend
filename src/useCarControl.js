@@ -10,6 +10,7 @@ export function useCarControl() {
   const [movimientos, setMovimientos] = useState([]);
   const [demos, setDemos] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [networkLogs, setNetworkLogs] = useState([]);
   const [status, setStatus] = useState('conectando'); // conectando, conectado, error, enviando
   const [statusMsg, setStatusMsg] = useState('Iniciando conexión...');
   const [wsConnected, setWsConnected] = useState(false);
@@ -24,6 +25,24 @@ export function useCarControl() {
     clearTimeout(id);
     return response;
   };
+
+  const pushNetworkLog = useCallback((method, endpoint, statusCode = 200) => {
+    setNetworkLogs(prev => {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const MMM = months[now.getMonth()];
+      const yyyy = now.getFullYear();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      
+      const dateStr = `${dd}/${MMM}/${yyyy} ${hh}:${mm}:${ss}`;
+      const logStr = `79.127.147.92 - - [${dateStr}] "${method} ${endpoint} HTTP/1.1" ${statusCode} -`;
+      
+      return [logStr, ...prev].slice(0, 15); // Guardar los últimos 15
+    });
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -50,8 +69,17 @@ export function useCarControl() {
     loadData();
   }, [loadData]);
 
-  const pushLog = useCallback((name, pwm, timestamp = null, duration = null) => {
+  const pushLog = useCallback((name, pwm, timestamp = null, duration = null, fromWS = false) => {
     setLogs(prev => {
+      const isWsActive = wsRef.current && wsRef.current.readyState === WebSocket.OPEN;
+      
+      // Para evitar duplicados en la simulación 3D:
+      // Si este log viene del Polling HTTP (fromWS=false) y el WebSocket está activo,
+      // lo ignoramos, porque el WebSocket ya lo empujó en tiempo real al instante.
+      if (!fromWS && isWsActive && prev.length > 0) {
+        return prev;
+      }
+
       const newLog = {
         id: `${timestamp || Date.now()}-${name}`,
         name: name,
@@ -59,6 +87,7 @@ export function useCarControl() {
         pwm: pwm || 255,
         duration: duration || null
       };
+      
       if (prev.length > 0 && prev[0].id === newLog.id) return prev;
       return [newLog, ...prev].slice(0, 5); // Keep last 5 elements
     });
@@ -69,7 +98,7 @@ export function useCarControl() {
       const res = await fetchWithTimeout(`${API_URL}/ultimo_movimiento`, {}, 3000);
       const data = await res.json();
       if (data.success && data.data) {
-        pushLog(data.data.nombre_movimiento, data.data.mia_pwm, data.data.fecha_hora, data.data.mi_time);
+        pushLog(data.data.nombre_movimiento, data.data.mia_pwm, data.data.fecha_hora, data.data.mi_time, false);
       }
     } catch (e) {
       // Silent fail for polling
@@ -102,7 +131,7 @@ export function useCarControl() {
             const parsed = JSON.parse(event.data);
             // El servidor envía: { success: True, data: { movimiento, mia_pwm, mda_pwm, mi_time } }
             if (parsed.success && parsed.data && parsed.data.movimiento) {
-              pushLog(parsed.data.movimiento, parsed.data.mia_pwm, null, parsed.data.mi_time);
+              pushLog(parsed.data.movimiento, parsed.data.mia_pwm, null, parsed.data.mi_time, true);
             }
           } catch (e) {}
         };
@@ -142,15 +171,18 @@ export function useCarControl() {
     const interval = setInterval(() => {
       // Fuerza la actualización cada 2 segundos según requerimiento
       updateLastMovement();
+      pushNetworkLog('GET', '/api/ultimo_movimiento');
       
       // Sincronizar también la velocidad
       fetch(`${API_URL}/velocidad`)
         .then(res => res.json())
         .then(data => { if (data.success) setSpeed(data.velocidad); })
         .catch(() => {});
+      
+      setTimeout(() => pushNetworkLog('GET', '/api/velocidad'), 200); // Pequeño delay visual
     }, 2000);
     return () => clearInterval(interval);
-  }, [updateLastMovement, wsConnected]);
+  }, [updateLastMovement, wsConnected, pushNetworkLog]);
 
   const sendMovement = async (movimiento) => {
     setStatus('enviando');
@@ -220,6 +252,7 @@ export function useCarControl() {
     movimientos,
     demos,
     logs,
+    networkLogs,
     status,
     statusMsg,
     wsConnected,
