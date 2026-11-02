@@ -1,15 +1,12 @@
-# PROPOSED GitHub Actions workflow — NOT ACTIVE ON PURPOSE.
+# Build the Vite app and deploy the compiled output to GitHub Pages.
 #
-# This file lives under docs/proposed-workflows/ instead of .github/workflows/
-# so it does NOT run on push. To enable automated GitHub Pages deployment:
-#   1. Move this file to .github/workflows/deploy-pages.yml
-#   2. In the repository Settings > Pages, set "Source" to "GitHub Actions".
-#   3. (Optional) Define repository variables VITE_API_URL / VITE_WS_URL
-#      (Settings > Secrets and variables > Actions > Variables) so the build
-#      can point to a real backend. Leave them empty to ship the demo mode.
+# IMPORTANT (one-time setup): in the repository go to
+#   Settings > Pages > Build and deployment > Source = "GitHub Actions"
+# Otherwise this workflow cannot publish (Pages would still serve a branch).
 #
-# The `base` path used by the build is '/Iot_carrito_aws_frontend/' and matches
-# the repository name used for GitHub Pages project sites.
+# After that, every push/merge to `main` (or a manual run) rebuilds and
+# redeploys the site automatically. `base` in vite.config.js already matches the
+# project site path '/Iot_carrito_aws_frontend/'.
 name: Deploy frontend to GitHub Pages
 
 on:
@@ -41,6 +38,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
+          # Empty by default -> the deployed site runs in simulated demo mode.
+          # Define repository variables (Settings > Secrets and variables >
+          # Actions > Variables) to point at a real backend.
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_WS_URL: ${{ vars.VITE_WS_URL }}
       - uses: actions/upload-pages-artifact@v3

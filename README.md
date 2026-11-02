@@ -134,10 +134,24 @@ VITE_API_PROXY_TARGET=http://localhost:5001         # optional dev proxy
 ### Deployment (GitHub Pages)
 
 The build uses `base: '/Iot_carrito_aws_frontend/'` so it works under the GitHub
-Pages project URL. The current deployment is manual (via the `gh-pages` package).
-A **proposed** automated GitHub Actions workflow is included (not active) at
-[`docs/proposed-workflows/deploy-pages.yml`](docs/proposed-workflows/deploy-pages.yml);
-copy it to `.github/workflows/` to enable it.
+Pages project URL.
+
+Deployment is automated with GitHub Actions
+([`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)):
+every push/merge to `main` builds the app and publishes the compiled `dist/` to
+Pages.
+
+**One-time setup:** repository `Settings > Pages > Build and deployment >
+Source = "GitHub Actions"`.
+
+> **Why the page can appear blank:** Pages must serve the **compiled** output,
+> not the repository source. If Pages is set to serve the `main` branch root, the
+> browser requests `/src/main.jsx`, gets a 404 and the page stays blank.
+> Deploying the built `dist/` (as this workflow does) fixes it.
+>
+> **Manual fallback** (branch-based Pages): run `pnpm build` then
+> `pnpm dlx gh-pages -d dist`, and set `Settings > Pages > Source` to the
+> `gh-pages` branch.
 
 ---
 
