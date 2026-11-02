@@ -1,9 +1,13 @@
 # Documentación de APIs (Carrito IoT)
 
-Base URL (Producción): `http://50.16.92.186:5001/api`
-Base URL (Desarrollo): `/api` (Vía Proxy de Vite)
+Base URL: define `VITE_API_URL` (incluye el sufijo `/api`). Si está vacía, la app
+usa el backend simulado en el navegador y no llama a ningún host.
+WebSocket: define `VITE_WS_URL` (opcional).
 
-Dispositivo Identificador Estándar: `ESP8266-CAR-001`
+> Nota: los ejemplos de más abajo documentan el contrato del backend original
+> (Flask + MySQL). El despliegue en AWS Academy ya no existe; ver `../README.md`.
+
+Dispositivo Identificador Estándar: `ESP8266-CAR-001` (configurable con `VITE_DEVICE_ID`)
 
 ## 1. Movimientos
 ### `GET /movimientos`

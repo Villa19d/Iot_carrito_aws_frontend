@@ -1,0 +1,58 @@
+# PROPOSED GitHub Actions workflow — NOT ACTIVE ON PURPOSE.
+#
+# This file lives under docs/proposed-workflows/ instead of .github/workflows/
+# so it does NOT run on push. To enable automated GitHub Pages deployment:
+#   1. Move this file to .github/workflows/deploy-pages.yml
+#   2. In the repository Settings > Pages, set "Source" to "GitHub Actions".
+#   3. (Optional) Define repository variables VITE_API_URL / VITE_WS_URL
+#      (Settings > Secrets and variables > Actions > Variables) so the build
+#      can point to a real backend. Leave them empty to ship the demo mode.
+#
+# The `base` path used by the build is '/Iot_carrito_aws_frontend/' and matches
+# the repository name used for GitHub Pages project sites.
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_WS_URL: ${{ vars.VITE_WS_URL }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
