@@ -259,3 +259,59 @@ input[type=range]::-webkit-slider-thumb:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* Mode banner (LIVE / DEMO SIMULADA) — always visible */
+.mode-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  border: 1px solid;
+}
+
+.mode-banner .mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.mode-banner .mode-note {
+  color: var(--text-muted);
+}
+
+.mode-banner.mode-sim {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.mode-banner.mode-sim .mode-badge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.mode-banner.mode-live {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.mode-banner.mode-live .mode-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+.mode-banner.mode-checking {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+.mode-banner.mode-checking .mode-badge {
+  background: rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+}

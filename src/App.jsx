@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import ControlPanel from './ControlPanel';
 import MonitorPanel from './MonitorPanel';
+import DemoBanner from './DemoBanner';
 import { Activity } from 'lucide-react';
 import './App.css';
 
@@ -12,6 +13,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('control'); // 'control' or 'monitor'
 
   const {
+    mode,
     speed,
     movimientos,
     demos,
@@ -30,8 +32,8 @@ function App() {
 
   return (
     <>
+      <DemoBanner mode={mode} />
       <Navbar activeTab={activeTab} setTab={setActiveTab} />
-      
       <div className="app-container">
         {activeTab === 'control' ? (
           <>
