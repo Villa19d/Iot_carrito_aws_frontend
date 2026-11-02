@@ -137,10 +137,23 @@ VITE_API_PROXY_TARGET=http://localhost:5001        # proxy de desarrollo (opcion
 ### Despliegue (GitHub Pages)
 
 El build usa `base: '/Iot_carrito_aws_frontend/'` para funcionar bajo la URL de
-proyecto de GitHub Pages. El despliegue actual es manual (con el paquete
-`gh-pages`). Se incluye un workflow de GitHub Actions **propuesto** (inactivo) en
-[`docs/proposed-workflows/deploy-pages.yml`](docs/proposed-workflows/deploy-pages.yml);
-cópialo a `.github/workflows/` para activarlo.
+proyecto de GitHub Pages.
+
+El despliegue está automatizado con GitHub Actions
+([`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)):
+cada push/merge a `main` compila la app y publica el `dist/` en Pages.
+
+**Configuración única:** `Settings > Pages > Build and deployment >
+Source = "GitHub Actions"`.
+
+> **Por qué puede verse en blanco:** Pages debe servir el output **compilado**, no
+> el código fuente. Si Pages sirve la raíz de la rama `main`, el navegador pide
+> `/src/main.jsx`, recibe un 404 y la página queda en blanco. Publicar el `dist/`
+> compilado (como hace este workflow) lo corrige.
+>
+> **Alternativa manual** (Pages por rama): ejecuta `pnpm build` y luego
+> `pnpm dlx gh-pages -d dist`, y pon `Settings > Pages > Source` en la rama
+> `gh-pages`.
 
 ---
 
