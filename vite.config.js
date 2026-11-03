@@ -18,9 +18,15 @@ export default defineConfig(({ mode }) => {
       }
     : undefined
 
+  // Base path:
+  //   - '/' is the default and works for Vercel/Netlify and `pnpm preview`.
+  //   - GitHub Pages serves the app from a sub-path, so the Pages workflow
+  //     sets VITE_BASE=/Iot_carrito_aws_frontend/.
+  const base = env.VITE_BASE || '/'
+
   return {
     plugins: [react()],
-    base: '/Iot_carrito_aws_frontend/', // Base URL obligatoria para GitHub Pages
+    base,
     server: { proxy },
   }
 })
