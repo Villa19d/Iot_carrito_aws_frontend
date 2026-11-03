@@ -38,6 +38,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
+          # GitHub Pages serves from a sub-path, so define the base here.
+          VITE_BASE: /Iot_carrito_aws_frontend/
           # Empty by default -> the deployed site runs in simulated demo mode.
           # Define repository variables (Settings > Secrets and variables >
           # Actions > Variables) to point at a real backend.
