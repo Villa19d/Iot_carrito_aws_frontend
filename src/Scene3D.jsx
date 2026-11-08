@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Grid, OrbitControls, Stars } from '@react-three/drei';
 import { Physics, usePlane } from '@react-three/cannon';
 import Vehicle from './Vehicle';
+import React, { useRef, useEffect } from 'react';
 
 function Ground() {
   const [ref] = usePlane(() => ({
@@ -25,7 +26,12 @@ function Ground() {
 
 export default function Scene3D({ lastMovement }) {
   const controlsRef = useRef();
-
+    useEffect(() => {
+    const t = setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 200);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <Canvas 
       camera={{ position: [5, 5, 10], fov: 45 }} 

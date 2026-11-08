@@ -168,3 +168,9 @@
   }
   .status-bar > div { width: 100%; }
 }
+
+.canvas-container {
+  /* ...lo que ya tienes... */
+  min-height: 0;
+  contain: layout paint;
+}
