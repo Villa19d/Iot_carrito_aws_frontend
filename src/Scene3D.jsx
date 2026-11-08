@@ -26,11 +26,14 @@ function Ground() {
 export default function Scene3D({ lastMovement }) {
   const controlsRef = useRef();
     useEffect(() => {
-    const t = setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 200);
-    return () => clearTimeout(t);
-  }, []);
+  const el = controlsRef.current?.domElement?.parentElement;
+  if (!el || typeof ResizeObserver === 'undefined') return;
+  const ro = new ResizeObserver(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+  ro.observe(el);
+  return () => ro.disconnect();
+}, []);
   return (
     <Canvas 
       camera={{ position: [5, 5, 10], fov: 45 }} 
