@@ -1,9 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Grid, OrbitControls, Stars } from '@react-three/drei';
 import { Physics, usePlane } from '@react-three/cannon';
 import Vehicle from './Vehicle';
-import React, { useRef, useEffect } from 'react';
 
 function Ground() {
   const [ref] = usePlane(() => ({
