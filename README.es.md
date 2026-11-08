@@ -5,12 +5,11 @@ carrito robot con ESP8266: 11 comandos de movimiento, control de velocidad
 global (0–255), secuencias DEMO pre-grabadas y un panel de monitoreo en vivo,
 todo con estética synthwave/neón y un auto renderizado en 3D en el navegador.
 
-> **Importante:** este proyecto se construyó como examen del Tema 4 de la materia
-> *Implementación de soluciones IoT*. El backend original corría en un laboratorio
-> temporal de **AWS Academy** que hoy está **cerrado**, por lo que los endpoints
-> reales de AWS ya no existen. Para mantener el proyecto demostrable, la app ahora
-> incluye un **backend simulado en el navegador**. Cuando no hay un backend real
-> configurado, la app muestra claramente `DEMO SIMULADA (sin hardware)` y
+> **Estado (nov 2026):** este proyecto se construyó como examen del Tema 4 de
+> *Implementación de soluciones IoT* (entrega original `01/06/2026`) y se
+> **re-desplegó en noviembre de 2026** en un **laboratorio de AWS**. La
+> infraestructura en vivo se mantendrá hasta **[CONFIRMAR fecha]**; después, la
+> app cae a su **modo demo** en el navegador (`DEMO SIMULADA (sin hardware)`), que
 > **nunca afirma controlar hardware físico**.
 
 ---
@@ -37,16 +36,16 @@ observarlo desde cualquier navegador.
 ```mermaid
 flowchart LR
     subgraph HW["Hardware"]
-        ESP["Carrito ESP8266<br/>driver L9110S + HC-SR04"]
+        ESP["Carrito ESP8266<br/>driver L9110S<br/>(HC-SR04 instalado, no usado)"]
     end
 
-    subgraph AWS["Laboratorio AWS Academy (cerrado)"]
-        FLASK["Backend Flask en EC2<br/>API REST :5001<br/>WebSocket nativo :5000"]
-        RDS[("MySQL en Amazon RDS<br/>stored procedures sp_*")]
+    subgraph AWS["Laboratorio AWS (re-desplegado nov-2026)"]
+        FLASK["Backend Flask en EC2<br/>API REST :5001<br/>WebSocket :5000"]
+        RDS[("Amazon RDS for MySQL<br/>stored procedures sp_*")]
     end
 
     subgraph WEB["Sitio estático"]
-        REACT["React + Vite + Three.js<br/>GitHub Pages"]
+        REACT["React + Vite + Three.js<br/>Vercel"]
     end
 
     REACT -- "GET/POST /api/* (HTTP)" --> FLASK
@@ -58,16 +57,16 @@ flowchart LR
   Cada comando lleva el PWM de ambos motores y una duración; el carrito se detiene
   al terminar la duración.
 - **Backend (Flask, EC2):** API REST en `5001` para el panel web y un servidor
-  WebSocket nativo hecho a mano en `5000` para el dispositivo. Escala el PWM de
-  los motores según la velocidad global y reproduce las secuencias DEMO
-  respetando los retardos reales.
+  WebSocket en `5000` (librería estándar **`websockets`**) para el dispositivo.
+  Escala el PWM de los motores según la velocidad global y reproduce las
+  secuencias DEMO respetando los retardos reales.
 - **Base de datos (MySQL, RDS):** catálogo de movimientos, secuencias DEMO y su
   detalle, más movimientos/obstáculos registrados y una tabla `parametros`. Todo
   el acceso pasa por **stored procedures** (`sp_ultimo_movimiento`,
   `sp_agregar_movimiento`, `sp_crear_demo`, `sp_agregar_movimiento_a_demo`,
   `sp_repetir_demo`, …).
-- **Frontend (GitHub Pages):** este proyecto — panel de control, dashboard de
-  monitoreo y el auto 3D.
+- **Frontend (Vercel):** este proyecto — panel de control, dashboard de monitoreo
+  y el auto 3D (GitHub Pages queda como objetivo alternativo).
 
 ### Estructura del repositorio
 
@@ -134,39 +133,30 @@ VITE_WS_URL=wss://tu-backend.ejemplo.com          # opcional
 VITE_API_PROXY_TARGET=http://localhost:5001        # proxy de desarrollo (opcional)
 ```
 
-### Despliegue (GitHub Pages)
+### Despliegue (Vercel principal · GitHub Pages alternativa)
 
-El build usa `base: '/Iot_carrito_aws_frontend/'` para funcionar bajo la URL de
-proyecto de GitHub Pages.
+**Vercel es el host principal (activo).** Importa el repo, framework *Vite*,
+`pnpm build` → `dist/`, y define las variables `VITE_API_URL` y `VITE_WS_URL`.
+El build usa `base: '/'` por defecto.
 
-El despliegue está automatizado con GitHub Actions
-([`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)):
-cada push/merge a `main` compila la app y publica el `dist/` en Pages.
+GitHub Pages es una **alternativa secundaria y actualmente inactiva**: hay un
+workflow en [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)
+(solo corre si Pages se activa como fuente de despliegue). Para Pages el build
+necesita `VITE_BASE=/Iot_carrito_aws_frontend/`.
 
-**Configuración única:** `Settings > Pages > Build and deployment >
-Source = "GitHub Actions"`.
-
-> **Por qué puede verse en blanco:** Pages debe servir el output **compilado**, no
-> el código fuente. Si Pages sirve la raíz de la rama `main`, el navegador pide
-> `/src/main.jsx`, recibe un 404 y la página queda en blanco. Publicar el `dist/`
-> compilado (como hace este workflow) lo corrige.
->
-> **Alternativa manual** (Pages por rama): ejecuta `pnpm build` y luego
-> `pnpm dlx gh-pages -d dist`, y pon `Settings > Pages > Source` en la rama
-> `gh-pages`.
+> **Por qué puede verse en blanco en Pages:** Pages debe servir el output
+> **compilado**, no el código fuente; si no, el navegador pide `/src/main.jsx` y
+> recibe un 404.
 
 ---
 
 ## Estado (honesto)
 
-- El **laboratorio de AWS Academy está cerrado**. El backend en EC2 y la base en
-  RDS ya no existen, así que el modo `LIVE` no tiene a qué conectarse salvo que se
-  vuelva a desplegar un backend.
-- Por eso la app corre en **modo simulado** por defecto y lo dice claramente.
-- El **firmware del ESP8266 que habla WebSocket no está en este repositorio** — el
-  `.ino` en la carpeta del proyecto es el ejemplo del fabricante (HTTP simple
-  sobre un punto de acceso Wi-Fi). `[TODO_CONTENT]`: enlace al sketch del firmware
-  WebSocket.
+- **Re-desplegado en noviembre de 2026** (entrega original `01/06/2026`) en un
+  **laboratorio de AWS**. Se mantiene hasta **[CONFIRMAR fecha]**; después la app
+  cae automáticamente a **modo demo** en el navegador.
+- El **firmware ESP8266 que habla WebSocket SÍ está en el repositorio del backend**:
+  `ESP8266_WiFi_Robot_Car/ESP8266_WiFi_Robot_Car.ino` (rama `feat/portfolio-demo`).
 - No hay suite de pruebas automatizadas configurada, por lo que no se agregó.
 
 ---
@@ -201,9 +191,9 @@ Source = "GitHub Actions"`.
 
 ## Roadmap
 
-- **Rehospedar sin AWS Academy.** Reemplazar el EC2+RDS cerrado por un despliegue
-  serverless pequeño con **polling** de estado (dejando el servidor WebSocket
-  nativo a mano por HTTP simple + polling corto).
+- **Rehospedar tras el laboratorio AWS.** Cuando caduque el laboratorio,
+  reemplazar el EC2+RDS por un despliegue serverless pequeño con **polling** de
+  estado (dejando el servidor WebSocket por HTTP simple + polling corto).
 - **Postgres serverless.** Mover el esquema y los stored procedures a un Postgres
   serverless (p. ej. Neon/Supabase) y migrar la lógica que vivía en las consultas
   del backend Flask.
@@ -214,9 +204,14 @@ Source = "GitHub Actions"`.
 
 ## Capturas y video
 
-- Captura del panel de control: `[TODO_CONTENT]` (16:10, ver `../PORTFOLIO_ENTRY.md`)
-- Captura del dashboard de monitoreo: `[TODO_CONTENT]`
-- Video de la demo: `[TODO_CONTENT]`
+| Vista | Descripción |
+|---|---|
+| ![Panel de control](docs/img/carrito-portada.jpg) | Panel de control + auto 3D (portada, 16:10) |
+| ![Hardware](docs/img/carrito-hardware.jpg) | Hardware del carrito ESP8266 |
+| ![Laptop](docs/img/carrito-laptop.jpg) | Manejando el carrito desde el navegador |
+
+- Video de la demo: [LINK_YOUTUBE_DEMO]
+- Recorrido de la arquitectura AWS: [LINK_YOUTUBE_AWS]
 
 ## Código fuente
 
@@ -225,5 +220,19 @@ Source = "GitHub Actions"`.
 
 ## Licencia
 
-`[TODO_CONTENT]` — no hay archivo de licencia en el repositorio.
+MIT — ver [`LICENSE`](LICENSE).
+
+
+---
+
+## ⚠️ Limitaciones (demo, no producción)
+
+- **Sin autenticación:** la API no valida usuarios ni tokens; cualquiera con la URL
+  podría enviar comandos al carro.
+- **Exposición de puertos:** el Security Group abre **5000/5001**. Recomendado:
+  **cerrar el 5001** (el navegador usa el Cloudflare Tunnel) y dejar el **5000**
+  solo para el ESP8266.
+- **No apto para producción:** Flask en modo desarrollo + `websockets`, sin TLS
+  propio (el TLS lo aporta Cloudflare Tunnel).
+- El carro físico se mantiene **desconectado** salvo durante las grabaciones.
 

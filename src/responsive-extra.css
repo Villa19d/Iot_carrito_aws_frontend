@@ -1,0 +1,60 @@
+/* Refuerzos responsive para MonitorPanel y Footer (que usan estilos inline) */
+
+/* Grid del MonitorPanel: 2 columnas en desktop, 1 columna en móvil */
+@media (max-width: 767px) {
+  /* El grid auto-fit con minmax(300px,1fr) ya se apila, pero forzamos paddings compactos */
+  .glass-card {
+    padding: 12px;
+  }
+}
+
+/* Reduce el header del monitor en móvil */
+@media (max-width: 600px) {
+  /* Apila el header del MonitorPanel (título + telemetría en vivo) */
+  .glass-card > div[style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .glass-card > div[style*="justify-content: space-between"] > div[style*="text-align: right"] {
+    text-align: left !important;
+    width: 100%;
+  }
+  .glass-card > div[style*="justify-content: flex-end"] {
+    justify-content: flex-start !important;
+  }
+}
+
+/* Footer: reduce paddings y alinea en móvil */
+@media (max-width: 600px) {
+  footer {
+    padding: 18px 12px !important;
+    font-size: 0.82rem !important;
+    gap: 8px !important;
+  }
+  footer > div {
+    gap: 10px !important;
+    flex-direction: column;
+    align-items: center;
+  }
+  footer p {
+    font-size: 0.78rem !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* Botones pill en móviles muy pequeños: evita que crezcan demasiado */
+@media (max-width: 380px) {
+  .pill-btn {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+}
+
+/* El canvas 3D dentro del monitor necesita min-height menor en móvil */
+@media (max-width: 767px) {
+  .glass-card .canvas-container {
+    min-height: 220px !important;
+    height: 240px !important;
+  }
+}

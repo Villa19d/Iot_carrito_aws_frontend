@@ -171,3 +171,130 @@ https://TU-APP.vercel.app                              # banner LIVE
 - Un **Quick Tunnel** funciona ya, pero su URL es **efímera**; para un enlace de
   portafolio fijo necesitas **dominio** (Cloudflare) o **DuckDNS + Caddy**.
 
+
+---
+
+## Dominio propio en Cloudflare — paso a paso
+
+Reemplaza `TUDOMINIO.com` por tu dominio real. Usaremos 3 subdominios:
+
+| Subdominio | Para qué | Apunta a | Cloudflare proxy |
+|---|---|---|---|
+| `iot.TUDOMINIO.com` | Frontend (Vercel) | CNAME → `cname.vercel-dns.com` | **DNS only (gris)** |
+| `api.TUDOMINIO.com` | REST `/api` | Tunnel → `localhost:5001` | Naranja (automático) |
+| `ws.TUDOMINIO.com` | WebSocket | Tunnel → `localhost:5000` | Naranja (automático) |
+
+### Paso 1 — Tunnel en la EC2 (backend)
+```bash
+cloudflared tunnel login                         # elige TUDOMINIO.com
+cloudflared tunnel create carrito-iot            # crea ~/.cloudflared/<UUID>.json
+cloudflared tunnel route dns carrito-iot api.TUDOMINIO.com
+cloudflared tunnel route dns carrito-iot ws.TUDOMINIO.com
+
+sudo mkdir -p /etc/cloudflared
+sudo cp ~/.cloudflared/*.json /etc/cloudflared/
+sudo tee /etc/cloudflared/config.yml >/dev/null <<'EOF'
+tunnel: carrito-iot
+credentials-file: /etc/cloudflared/<UUID>.json
+ingress:
+  - hostname: api.TUDOMINIO.com
+    service: http://localhost:5001
+  - hostname: ws.TUDOMINIO.com
+    service: http://localhost:5000
+  - service: http_status:404
+EOF
+
+sudo cloudflared service install
+sudo systemctl enable --now cloudflared
+sudo systemctl status cloudflared --no-pager
+```
+> `<UUID>.json` = el archivo real que creó `tunnel create`. Sustitúyelo.
+> (Alternativa: usa el UUID literal en `credentials-file`.)
+
+### Paso 2 — Añadir el dominio en Vercel
+1. Vercel → tu proyecto → **Settings → Domains → Add**.
+2. Escribe `iot.TUDOMINIO.com` → **Add**.
+3. Vercel te mostrará el registro DNS a crear (normalmente
+   `CNAME  iot  cname.vercel-dns.com`).
+
+### Paso 3 — DNS en Cloudflare (para el frontend)
+1. Cloudflare → tu dominio → **DNS → Records → Add record**.
+2. Tipo **CNAME**, Name `iot`, Target `cname.vercel-dns.com`.
+3. **Proxy status → DNS only (nube GRIS)**. Guarda.
+4. Vuelve a Vercel y espera a que valide el dominio y emita el certificado.
+
+> Por qué gris: Vercel termina el TLS por su cuenta; si pones nube naranja suele
+> dar errores de SSL/redirección. Para el **tunnel** sí queremos naranja (lo pone
+> `tunnel route dns` automáticamente).
+
+### Paso 4 — Variables de entorno en Vercel
+Vercel → Settings → Environment Variables (Production + Preview):
+```
+VITE_API_URL = https://api.TUDOMINIO.com/api
+VITE_WS_URL  = wss://ws.TUDOMINIO.com
+```
+> No necesitas `VITE_BASE` (el default ya es `/`). Recuerda **Redeploy** tras
+> cambiarlas (se leen en build time).
+
+### Paso 5 — Verificar
+```bash
+# EC2
+curl -s https://api.TUDOMINIO.com/api/movimientos       # 11 movimientos
+# PC (curl.exe en PowerShell)
+curl.exe -s https://api.TUDOMINIO.com/api/movimientos
+npx wscat -c wss://ws.TUDOMINIO.com                     # "Connected"
+```
+En el navegador: `https://iot.TUDOMINIO.com` → banner **`LIVE`** y
+DevTools › Network › WS con una conexión **`wss://`**.
+
+### Notas
+- **ESP8266:** sigue con `ws://<ElasticIP>:5000` (socket crudo). Mantén el 5000
+  abierto (restringido por IP si puedes).
+- **Idle:** Cloudflare puede cerrar un WS sin actividad; el frontend **reconecta**
+  y el polling de 2 s mantiene la UI viva.
+
+
+---
+
+## Variante: túnel administrado desde el DASHBOARD (con token)
+
+Alternativa al método CLI (sin `config.yml` ni `cert.pem`): el túnel se configura
+desde el dashboard de Cloudflare y la EC2 solo recibe un **token**.
+
+### Plan de subdominios usado (ejemplo real: `rodrigodvillar.com`)
+| Subdominio | Servicio | Local | Tipo |
+|---|---|---|---|
+| `carrito-api.rodrigodvillar.com` | REST `/api` | `http://localhost:5001` | HTTP |
+| `carrito-ws.rodrigodvillar.com` | WebSocket | `http://localhost:5000` | HTTP (Cloudflare hace el upgrade a WSS) |
+| `carrito.rodrigodvillar.com` | Frontend (Vercel) | — | CNAME (DNS only / gris) |
+
+> Se usan subdominios `carrito-*` para no tocar `api.rodrigodvillar.com` (que ya
+> apunta a Render).
+
+### Pasos
+1. **Dashboard:** Zero Trust → Networks → Tunnels → **Create tunnel** → `carrito-iot`.
+2. **Public Hostnames** (en el dashboard):
+   - `carrito-api.rodrigodvillar.com` → **HTTP** → `localhost:5001`
+   - `carrito-ws.rodrigodvillar.com` → **HTTP** → `localhost:5000`
+   Cloudflare crea los **CNAME proxied** solo.
+3. **En la EC2** (copiar el token del dashboard):
+   ```bash
+   sudo dnf install -y https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-x86_64.rpm
+   sudo cloudflared service install <TOKEN>
+   sudo systemctl status cloudflared --no-pager
+   ```
+4. **Verificar** (EC2 o PC):
+   ```bash
+   curl -s https://carrito-api.rodrigodvillar.com/api/movimientos
+   npx wscat -c wss://carrito-ws.rodrigodvillar.com
+   ```
+5. **Vercel → Environment Variables:**
+   ```
+   VITE_API_URL = https://carrito-api.rodrigodvillar.com/api
+   VITE_WS_URL  = wss://carrito-ws.rodrigodvillar.com
+   ```
+   → **Redeploy**.
+
+Ventajas: no se abren puertos en el Security Group de la EC2; Cloudflare termina
+HTTPS/WSS en el edge; el token se gestiona en el dashboard.
+
