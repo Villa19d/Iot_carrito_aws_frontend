@@ -154,17 +154,4 @@
   color: rgba(255, 255, 255, 0.5);
   font-size: clamp(0.65rem, 1.6vw, 0.8rem);
   pointer-events: none;
-  max-width: calc(100% - 24px);
-  text-align: right;
-}
-
-/* En móviles muy estrechos, la status-bar se apila */
-@media (max-width: 520px) {
-  .status-bar {
-    border-radius: 14px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  .status-bar > div { width: 100%; }
 }
