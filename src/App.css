@@ -15,7 +15,7 @@
       "controls view extras"
       "controls view logs";
     grid-template-rows: auto 1fr;
-    align-items: start;
+    align-items: stretch;   /* ← antes era 'start' y rompía el tamaño del canvas */
   }
 }
 
@@ -132,6 +132,8 @@
   position: relative;
   border: 1px solid rgba(139, 92, 246, 0.2);
   box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+  min-height: 0;
+  contain: layout paint;
 }
 
 @media (max-width: 1023px) {
